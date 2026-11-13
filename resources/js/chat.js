@@ -230,6 +230,9 @@ export function registerChat(Alpine) {
                     you: user.id === me,
                 }))
                 .sort((a, b) => (a.you === b.you ? a.name.localeCompare(b.name) : a.you ? 1 : -1)),
+            /* Whether the caller made it: only they are offered Remove, and
+               the server asks Stream the same question before doing it. */
+            mine: (channel.data?.created_by?.id ?? channel.data?.created_by_id ?? null) === me,
             /* Everybody but the caller: who a call has to ring. */
             memberIds: others.map((user) => user.id),
             online: others.some((user) => user.online),
@@ -1079,6 +1082,19 @@ export function registerChat(Alpine) {
             await ask(ENDPOINTS.members, {
                 method: 'POST',
                 body: JSON.stringify({ type: channel.type, id: channel.id, add }),
+            });
+
+            await channel.watch({ messages: { limit: PAGE } });
+            this.hold(channel);
+            this.refresh();
+        },
+
+        async removeMember(cid, id) {
+            const channel = this.raw(cid);
+
+            await ask(ENDPOINTS.members, {
+                method: 'POST',
+                body: JSON.stringify({ type: channel.type, id: channel.id, remove: [id] }),
             });
 
             await channel.watch({ messages: { limit: PAGE } });
@@ -1950,6 +1966,18 @@ export function registerChat(Alpine) {
         },
 
         /** Adding people to the conversation already open. */
+        /** Taking somebody out of the open channel, after asking. */
+        async removePerson(person) {
+            if (!window.confirm(`Remove ${person.name} from this channel? They will no longer see it or its messages.`)) return;
+
+            try {
+                await this.$store.chat.removeMember(this.$store.chat.active, person.id);
+            } catch (error) {
+                /* Said out loud: the details panel has no error line of its own. */
+                window.alert('They could not be removed. Only the person who made this channel can remove people.');
+            }
+        },
+
         async addChosen() {
             if (this.chosen.length === 0) return;
 

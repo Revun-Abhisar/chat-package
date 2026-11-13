@@ -338,6 +338,19 @@ final class ChatController
             return response()->json(['message' => 'You cannot change who is in this channel.'], 403);
         }
 
+        /*
+         * **Taking somebody else out is the channel's maker's call alone.**
+         * Adding people stays the permission above; removing one is final for
+         * them — the channel and its history leave their list — so it belongs
+         * to the person whose room it is, not to anybody who may make rooms.
+         * Stream is asked who made it rather than the browser being believed.
+         */
+        $removingOthers = array_values(array_diff((array) ($data['remove'] ?? []), [$me])) !== [];
+
+        if ($removingOthers && $this->makerOf($stream, $data['type'], $data['id']) !== $me) {
+            return response()->json(['message' => 'Only the person who made this channel can remove people from it.'], 403);
+        }
+
         $answer = $stream->post("channels/{$data['type']}/{$data['id']}", array_filter([
             'add_members' => array_values(array_filter((array) ($data['add'] ?? []), Identity::looksLikeOurs(...))),
             'remove_members' => array_values(array_filter((array) ($data['remove'] ?? []), Identity::looksLikeOurs(...))),
@@ -346,6 +359,16 @@ final class ChatController
         return $answer === null
             ? response()->json(['message' => 'Stream would not change the members.'], 502)
             : response()->json(['ok' => true]);
+    }
+
+    /** Who made a channel, as Stream holds it, or null where it will not say. */
+    private function makerOf(Stream $stream, string $type, string $id): ?string
+    {
+        $answer = $stream->post("channels/{$type}/{$id}/query", ['state' => false]);
+
+        $maker = data_get($answer, 'channel.created_by.id') ?? data_get($answer, 'channel.created_by_id');
+
+        return is_string($maker) && $maker !== '' ? $maker : null;
     }
 
     /** What this person may do, so the interface can stop offering what they cannot. */

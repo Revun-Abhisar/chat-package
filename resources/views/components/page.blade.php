@@ -212,6 +212,15 @@
                                     <x-chat::icon name="message" />
                                 </button>
                             </template>
+
+                            {{-- Only the channel's maker, and never themselves:
+                                 leaving is not removing somebody. --}}
+                            <template x-if="current.type === 'team' && current.mine && ! person.you">
+                                <button type="button" class="rc-icon-button rc-icon-button--sm" title="{{ __('Remove from channel') }}"
+                                        @click="removePerson(person)">
+                                    <x-chat::icon name="close" />
+                                </button>
+                            </template>
                         </div>
                     </template>
                 </div>
