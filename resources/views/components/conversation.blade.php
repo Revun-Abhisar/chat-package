@@ -203,7 +203,11 @@
         <p class="rc-error" x-text="error"></p>
     </template>
 
-    <form class="rc-composer" @submit.prevent="send()">
+    <template x-if="! $store.chat.canSend(cid)">
+        <p class="rc-composer rc-composer__hint">{{ __('You can read this channel. Only some members can post here.') }}</p>
+    </template>
+
+    <form class="rc-composer" x-show="$store.chat.canSend(cid)" @submit.prevent="send()">
         <div class="rc-composer__box">
             <textarea
                 x-ref="field"

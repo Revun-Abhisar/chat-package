@@ -43,7 +43,13 @@
     $tabs = array_values(array_filter([
         ['key' => 'pins', 'icon' => 'pin', 'label' => __('My Pins')],
         ['key' => 'chats', 'icon' => 'message', 'label' => __('Chats')],
-        $directOnly ? null : ['key' => 'channels', 'icon' => 'hash', 'label' => __('Channels')],
+        /*
+         * **Somebody limited to direct messages still sees a channel they were
+         * put in.** They cannot make one or join one, so the tab is drawn only
+         * once a colleague has added them (`when`) — until then it is a tab
+         * with nothing behind it, which is exactly what this list leaves out.
+         */
+        ['key' => 'channels', 'icon' => 'hash', 'label' => __('Channels'), 'when' => $directOnly ? "\$store.chat.conversations.some((row) => row.type === 'team')" : null],
         $directOnly ? null : ['key' => 'threads', 'icon' => 'thread', 'label' => __('Threads')],
         ['key' => 'people', 'icon' => 'people', 'label' => __('People')],
     ]));
@@ -515,6 +521,7 @@
                 type="button"
                 class="rc-tab"
                 :class="tab === '{{ $tab['key'] }}' && 'rc-tab--on'"
+                @if (! empty($tab['when'])) x-show="{{ $tab['when'] }}" @endif
                 @click="show('{{ $tab['key'] }}')"
                 aria-label="{{ $tab['label'] }}"
                 data-test="chat-tab-{{ $tab['key'] }}"

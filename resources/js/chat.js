@@ -656,6 +656,18 @@ export function registerChat(Alpine) {
             return channels.get(cid) ?? null;
         },
 
+        /**
+         * May this person write here? Stream says so itself, per channel, in
+         * `own_capabilities` — so a role that may read a channel and not post
+         * in it gets a note instead of a box that fails on every send. Where
+         * Stream says nothing the answer is yes, which is how it always was.
+         */
+        canSend(cid) {
+            const capabilities = channels.get(cid)?.data?.own_capabilities;
+
+            return !Array.isArray(capabilities) || capabilities.includes('send-message');
+        },
+
         listen() {
             client.on(async (event) => {
                 const cid = event.cid ?? event.channel?.cid;
