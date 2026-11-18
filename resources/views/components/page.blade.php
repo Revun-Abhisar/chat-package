@@ -124,12 +124,14 @@
                     {{-- The name, and under it who is in here. The count is the
                          button: "2 members" that cannot say which two is an
                          instruction to go and ask somebody. --}}
-                    <button type="button" class="rc-main__title" @click="details = ! details">
+                    <button type="button" class="rc-main__title" @click="details = current.seesMembers && ! details">
                         <strong x-text="current.title"></strong>
                         <span x-text="$store.chat.subtitle(current)"></span>
                     </button>
 
-                    <template x-if="current.type === 'team'">
+                    {{-- The faces and the list are the maker's alone
+                         (`seesMembers`): everybody else sees the count. --}}
+                    <template x-if="current.type === 'team' && current.seesMembers">
                         <button type="button" class="rc-faces" @click="details = ! details" title="{{ __('Who is in here') }}">
                             <template x-for="person in current.people.slice(0, 4)" :key="person.id">
                                 <x-chat::avatar name="person.name" image="person.image" size="sm" />
@@ -185,7 +187,7 @@
         </template>
 
         {{-- Who is in the room, by name. --}}
-        <template x-if="current && details">
+        <template x-if="current && details && current.seesMembers">
             <aside class="rc-details">
                 <div class="rc-details__head">
                     <strong>{{ __('Details') }}</strong>

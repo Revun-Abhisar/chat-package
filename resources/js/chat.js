@@ -210,6 +210,19 @@ export function registerChat(Alpine) {
         const to = last ? new Date(last.created_at).getTime() : 0;
         const days = Math.max(1, (to - from) / 86400000);
 
+        /* Whether the caller made it: only they are offered Remove, and
+           the server asks Stream the same question before doing it. */
+        const mine = (channel.data?.created_by?.id ?? channel.data?.created_by_id ?? null) === me;
+
+        /*
+         * **Who is in a channel or a group is its maker's to see.** Anybody
+         * else in it reads the messages and the count, never the list of who
+         * else is there or their addresses — a room of trainees is a room of
+         * strangers to one another. A conversation of two is not a room: the
+         * other person is who it is with, and stays on show.
+         */
+        const seesMembers = mine || (channel.type !== 'team' && members.length <= 2);
+
         return {
             cid: channel.cid,
             type: channel.type,
@@ -221,6 +234,7 @@ export function registerChat(Alpine) {
             /* Who they are, not how many. A channel that says "2 members" and
                cannot say which two is telling somebody to go and ask. */
             people: members
+                .filter((user) => seesMembers || user.id === me)
                 .map((user) => ({
                     id: user.id,
                     name: user.name || user.id,
@@ -230,9 +244,8 @@ export function registerChat(Alpine) {
                     you: user.id === me,
                 }))
                 .sort((a, b) => (a.you === b.you ? a.name.localeCompare(b.name) : a.you ? 1 : -1)),
-            /* Whether the caller made it: only they are offered Remove, and
-               the server asks Stream the same question before doing it. */
-            mine: (channel.data?.created_by?.id ?? channel.data?.created_by_id ?? null) === me,
+            mine,
+            seesMembers,
             /* Everybody but the caller: who a call has to ring. */
             memberIds: others.map((user) => user.id),
             online: others.some((user) => user.online),
