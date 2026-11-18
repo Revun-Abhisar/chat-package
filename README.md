@@ -29,7 +29,7 @@ decides.
 ```jsonc
 // composer.json
 "repositories": [
-    { "type": "vcs", "url": "https://github.com/Abhisarchoudhary/chat-package.git" }
+    { "type": "vcs", "url": "https://github.com/Revun-Abhisar/chat-package.git" }
 ]
 ```
 
@@ -181,7 +181,7 @@ appear in the same address book as Royal York's.
 ```jsonc
 // composer.json
 "repositories": [
-    { "type": "vcs", "url": "https://github.com/Abhisarchoudhary/chat-package.git" }
+    { "type": "vcs", "url": "https://github.com/Revun-Abhisar/chat-package.git" }
 ]
 ```
 
