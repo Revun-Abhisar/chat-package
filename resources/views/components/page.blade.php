@@ -143,7 +143,8 @@
                         </button>
                     </template>
 
-                    <template x-if="current.type === 'team' && $store.chat.abilities['create-channel']">
+                    {{-- Adding people is the maker's alone, like the list. --}}
+                    <template x-if="current.type === 'team' && current.mine && $store.chat.abilities['create-channel']">
                         <button type="button" class="rc-icon-button" title="{{ __('Add people') }}" @click="pick('members')">
                             <x-chat::icon name="people" />
                         </button>
@@ -227,7 +228,7 @@
                     </template>
                 </div>
 
-                <template x-if="current.type === 'team' && $store.chat.abilities['create-channel']">
+                <template x-if="current.type === 'team' && current.mine && $store.chat.abilities['create-channel']">
                     <div class="rc-details__foot">
                         <button type="button" class="rc-button" @click="pick('members')">{{ __('Add people') }}</button>
                     </div>

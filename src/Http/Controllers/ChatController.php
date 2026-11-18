@@ -309,7 +309,7 @@ final class ChatController
         ]);
     }
 
-    /** Adding or removing people, which is the same permission as making one. */
+    /** Adding or removing people: the permission to make one, and being the one who made it. */
     public function members(Request $request, ParticipantDirectory $directory, Stream $stream): JsonResponse
     {
         $person = $directory->current();
@@ -339,16 +339,19 @@ final class ChatController
         }
 
         /*
-         * **Taking somebody else out is the channel's maker's call alone.**
-         * Adding people stays the permission above; removing one is final for
-         * them — the channel and its history leave their list — so it belongs
-         * to the person whose room it is, not to anybody who may make rooms.
-         * Stream is asked who made it rather than the browser being believed.
+         * **Who is in a channel is its maker's call alone — in, or out.**
+         * Removing somebody is final for them, and adding somebody shows them
+         * everybody already there; both belong to the person whose room it
+         * is, not to anybody who may make rooms. It is also the only person
+         * who is shown the list (`seesMembers` in the script), and adding to a
+         * list you cannot see is choosing blind. Stream is asked who made it
+         * rather than the browser being believed.
          */
         $removingOthers = array_values(array_diff((array) ($data['remove'] ?? []), [$me])) !== [];
+        $adding = array_values((array) ($data['add'] ?? [])) !== [];
 
-        if ($removingOthers && $this->makerOf($stream, $data['type'], $data['id']) !== $me) {
-            return response()->json(['message' => 'Only the person who made this channel can remove people from it.'], 403);
+        if (($removingOthers || $adding) && $this->makerOf($stream, $data['type'], $data['id']) !== $me) {
+            return response()->json(['message' => 'Only the person who made this channel can change who is in it.'], 403);
         }
 
         $answer = $stream->post("channels/{$data['type']}/{$data['id']}", array_filter([
